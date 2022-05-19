@@ -1,0 +1,13 @@
+.vscode
+gofound
+/gofound
+/tmp/
+/index/
+/go.sum
+/.idea
+/*/*.bin
+/dist/
+/cache
+/test
+/data/db
+/data/dataset
