@@ -1,17 +1,18 @@
 package data
 
 import (
-    "github.com/cockroachdb/pebble"
+    "github.com/syndtr/goleveldb/leveldb"
+    "github.com/syndtr/goleveldb/leveldb/opt"
     "hegosearch/util"
 )
 
 type IndexDB struct {
-    IndexDB *pebble.DB
+    IndexDB *leveldb.DB
 }
 
 // when dbkv init , we open the database
 func IndexDataInit(dbpath string) *IndexDB {
-    kdb, err := pebble.Open(dbpath, &pebble.Options{})
+    kdb, err := leveldb.OpenFile(dbpath, &opt.Options{})
     index_db := IndexDB{}
     if err != nil {
         panic(err)
@@ -20,10 +21,10 @@ func IndexDataInit(dbpath string) *IndexDB {
     return &index_db
 }
 
-func (indexDb *IndexDB) InsertIntoDocDB(key string, id uint64) error {
+func (indexDB *IndexDB) InsertIntoDocDB(key string, id uint64) error {
     ids := []uint64{id}
     encoder := util.Encoder(ids)
-    err := indexDb.IndexDB.Set([]byte(key), encoder, nil)
+    err := indexDB.IndexDB.Put([]byte(key), encoder, nil)
     if err != nil {
         return err
     }
@@ -31,24 +32,32 @@ func (indexDb *IndexDB) InsertIntoDocDB(key string, id uint64) error {
 }
 
 // put the id into the word kvdb
-func (indexDb *IndexDB) InsertIndexIntoWord(id uint64, key string) error {
+func (indexDB *IndexDB) InsertIndexIntoWord(id uint64, key string) error {
     if len(key) == 0 {
         return nil
     }
-    value, closer, err := indexDb.IndexDB.Get([]byte(key))
+    value, err := indexDB.IndexDB.Get([]byte(key), nil)
     if err != nil {
-        if err == pebble.ErrNotFound {
-            return indexDb.InsertIntoDocDB(key, id)
+        if err == leveldb.ErrNotFound {
+            return indexDB.InsertIntoDocDB(key, id)
         } else {
             return err
         }
     }
     ids := make([]uint64, 0)
     util.Decoder(value, &ids)
-    closer.Close()
     ids = append(ids, id)
     encoder := util.Encoder(ids)
-    err = indexDb.IndexDB.Set([]byte(key), encoder, nil)
+    err = indexDB.IndexDB.Put([]byte(key), encoder, nil)
+    if err != nil {
+        return err
+    }
+    return nil
+}
+
+func (indexDB *IndexDB) InsertIdsIntoIndexDB(ids []uint64, key string) error {
+    encoder := util.Encoder(ids)
+    err := indexDB.IndexDB.Put([]byte(key), encoder, nil)
     if err != nil {
         return err
     }
@@ -56,12 +65,15 @@ func (indexDb *IndexDB) InsertIndexIntoWord(id uint64, key string) error {
 }
 
 func (indexDB *IndexDB) FindFromIndexDB(key string) ([]uint64, error) {
-    value, closer, err := indexDB.IndexDB.Get([]byte(key))
+    value, err := indexDB.IndexDB.Get([]byte(key), nil)
     if err != nil {
         return nil, err
     }
     ids := make([]uint64, 0)
     util.Decoder(value, &ids)
-    closer.Close()
     return ids, nil
+}
+
+func (indexDB *IndexDB) CloseIndexDB() {
+    indexDB.IndexDB.Close()
 }

@@ -38,7 +38,7 @@ func Init() {
 func main() {
     Init()
     data.JiebaInit()
-    csvfile, err := os.Open("data/dataset/wukong_100m_0.csv")
+    csvfile, err := os.Open("data/dataset/wukong_100m_1.csv")
     if err != nil {
         panic(err)
     }
@@ -55,6 +55,8 @@ func main() {
     }
     start := time.Now()
     count := 0
+
+    wordMap := make(map[string][]uint64)
     for {
         count++
         record, err := csvReader.Read()
@@ -77,18 +79,25 @@ func main() {
             panic(err)
         }
         words := data.PartWord(doc.Text)
+
         for i := range words {
-            err := indexDB.InsertIndexIntoWord(id, words[i])
-            if err != nil {
-                log.Fatalf("insert word error %v", err)
+            if ids, ok := wordMap[words[i]]; ok {
+                wordMap[words[i]] = append(ids, id)
+            } else {
+                wordMap[words[i]] = []uint64{id}
             }
         }
-        if count%1000 == 0 {
+        if count%10000 == 0 {
             cost := time.Since(start)
             fmt.Println("import cost:", cost.Seconds(), "s")
             start = time.Now()
         }
     }
-
+    for k, v := range wordMap {
+        err := indexDB.InsertIdsIntoIndexDB(v, k)
+        if err != nil {
+            panic(err)
+        }
+    }
     fmt.Println("import count:", count)
 }

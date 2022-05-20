@@ -3,39 +3,38 @@ package data
 import (
     "encoding/binary"
     "github.com/cockroachdb/pebble"
-    "github.com/cockroachdb/pebble/vfs"
+    "github.com/syndtr/goleveldb/leveldb"
+    "github.com/syndtr/goleveldb/leveldb/opt"
     "hegosearch/data/model"
     "hegosearch/util"
-    "reflect"
     "sync/atomic"
 )
 
-const DOC_ID = "doc_index"
+const DocId = "doc_index"
 
 type DocDB struct {
-    DocDB    *pebble.DB
+    DocDB    *leveldb.DB
     CurIndex uint64
 }
 
 // when dbkv init , we open the database
 func DocDataInit(dbpath string) *DocDB {
-    kdb, err := pebble.Open(dbpath, &pebble.Options{FS: vfs.NewMem()})
-    doc_db := DocDB{}
+    kdb, err := leveldb.OpenFile(dbpath, &opt.Options{})
+    docDb := DocDB{}
     if err != nil {
         panic(err)
     }
-    doc_db.DocDB = kdb
-    value, closer, err := doc_db.DocDB.Get([]byte(DOC_ID))
+    docDb.DocDB = kdb
+    value, err := docDb.DocDB.Get([]byte(DocId), nil)
     if err != nil {
         if err == pebble.ErrNotFound {
-            doc_db.CurIndex = 0
+            docDb.CurIndex = 0
         }
     } else {
-        doc_id := binary.BigEndian.Uint64(value)
-        doc_db.CurIndex = doc_id
-        closer.Close()
+        docId := binary.BigEndian.Uint64(value)
+        docDb.CurIndex = docId
     }
-    return &doc_db
+    return &docDb
 }
 
 // this function is to put the doc into the db
@@ -44,7 +43,7 @@ func (docDb *DocDB) InsertIntoDocDB(value *model.Document) (uint64, error) {
     id := docDb.CurIndex
     keyBytes := util.IntToByte(id)
     docDb.IncDocIndex()
-    err := docDb.DocDB.Set(keyBytes, valueBytes, nil)
+    err := docDb.DocDB.Put(keyBytes, valueBytes, nil)
     if err != nil {
         return id, err
     }
@@ -55,26 +54,30 @@ func (docDb *DocDB) InsertIntoDocDB(value *model.Document) (uint64, error) {
 func (docDb *DocDB) FindFromDocDB(key uint64) (*model.Document, error) {
     doc := new(model.Document)
     keyBytes := util.IntToByte(key)
-    value, closer, err := docDb.DocDB.Get(keyBytes)
+    value, err := docDb.DocDB.Get(keyBytes, nil)
     if err != nil {
         return nil, err
     }
     util.Decoder(value, &doc)
-    closer.Close()
     return doc, nil
 }
 
 // through the key to find the doc
 func (docDb *DocDB) IncDocIndex() {
     atomic.AddUint64(&docDb.CurIndex, 1)
-    docDb.DocDB.NewIndexedBatch()
 }
 
 func (docDb *DocDB) CountDocDB() uint64 {
-    iter := docDb.DocDB.NewIter(nil)
-    iterValue := reflect.ValueOf(*iter)
-    num := iterValue.FieldByName("seqNum").Uint()
-    return num
+    iter := docDb.DocDB.NewIterator(nil, nil)
+    count := 0
+    for iter.Next() {
+        count++
+    }
+    return uint64(count)
+}
+
+func (docDb *DocDB) CloseDocDB() {
+    docDb.DocDB.Close()
 }
 
 // put the id into the word kvdb

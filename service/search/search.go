@@ -21,17 +21,18 @@ type DocItem struct {
 
 func SearchInit(indexDB *data.IndexDB, docDB *data.DocDB) *Search {
     search := Search{
-        indexDB: indexDB,
-        docDB:   docDB,
-        DocMap:  make(map[uint64]uint64),
+        indexDB:  indexDB,
+        docDB:    docDB,
+        DocMap:   make(map[uint64]uint64),
+        ScoreMap: make(map[uint64]float64),
     }
     return &search
 }
 
-func (search *Search) SearchKey(key string) error {
+func (search *Search) SearchKey(key string) (map[uint64]float64, error) {
     ids, err := search.indexDB.FindFromIndexDB(key)
     if err != nil {
-        return err
+        return nil, err
     }
     search.processIds(ids)
     // tf(t in d) = √frequency 词频
@@ -39,7 +40,7 @@ func (search *Search) SearchKey(key string) error {
     // norm(d) = 1 / √numTerms 字段长度归一值
     // 开始计算分数
     search.processScores()
-    return nil
+    return search.ScoreMap, nil
 }
 
 func (search *Search) processScores() {
