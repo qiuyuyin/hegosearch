@@ -11,7 +11,7 @@ import (
 type Search struct {
     indexDB  *index.IndexDriver
     docDB    *doc.DocDriver
-    Tokenize tokenize.Token
+    Tokenize *tokenize.Token
 }
 
 type DocItem struct {
@@ -19,7 +19,7 @@ type DocItem struct {
     Count uint64
 }
 
-func NewSearch(indexDB *index.IndexDriver, docDB *doc.DocDriver, token tokenize.Token) *Search {
+func NewSearch(indexDB *index.IndexDriver, docDB *doc.DocDriver, token *tokenize.Token) *Search {
     search := Search{
         indexDB:  indexDB,
         docDB:    docDB,
