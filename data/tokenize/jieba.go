@@ -1,4 +1,4 @@
-package data
+package tokenize
 
 import (
     "github.com/go-ego/gse"

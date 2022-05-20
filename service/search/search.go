@@ -1,14 +1,15 @@
 package search
 
 import (
-    "hegosearch/data"
+    "hegosearch/data/doc"
+    "hegosearch/data/index"
     "log"
     "math"
 )
 
 type Search struct {
-    indexDB  *data.IndexDB
-    docDB    *data.DocDB
+    indexDB  *index.IndexDB
+    docDB    *doc.DocDB
     DocItems []*DocItem
     DocMap   map[uint64]uint64
     ScoreMap map[uint64]float64
@@ -19,7 +20,7 @@ type DocItem struct {
     Count uint64
 }
 
-func SearchInit(indexDB *data.IndexDB, docDB *data.DocDB) *Search {
+func SearchInit(indexDB *index.IndexDB, docDB *doc.DocDB) *Search {
     search := Search{
         indexDB:  indexDB,
         docDB:    docDB,

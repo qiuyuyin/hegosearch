@@ -1,20 +1,20 @@
-package data_test
+package index_test
 
 import (
     "fmt"
     . "github.com/onsi/ginkgo/v2"
     . "github.com/onsi/gomega"
+    "hegosearch/data/index"
+    "hegosearch/data/storage"
     "log"
     "os"
-
-    "hegosearch/data"
 )
 
 var _ = Describe("IndexDb", func() {
-    var indexDB *data.IndexDB
+    var indexDB *index.IndexDriver
     BeforeEach(func() {
-        indexDB = data.IndexDataInit("tmp")
-        fmt.Println("err")
+        levelDBStorage := storage.NewLevelDBStorage("tmp")
+        indexDB = index.NewIndexDriver(levelDBStorage)
     })
     Describe("doc_db", func() {
         Context("test insert", func() {
@@ -36,11 +36,10 @@ var _ = Describe("IndexDb", func() {
 
     })
     AfterEach(func() {
-        indexDB.IndexDB.Close()
+        indexDB.CloseIndexDB()
         err := os.RemoveAll("tmp")
         if err != nil {
             fmt.Println("delete error")
         }
-        fmt.Println("after")
     })
 })

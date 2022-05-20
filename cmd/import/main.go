@@ -4,8 +4,10 @@ import (
     "bufio"
     "encoding/csv"
     "fmt"
-    "hegosearch/data"
+    "hegosearch/data/doc"
+    "hegosearch/data/index"
     "hegosearch/data/model"
+    "hegosearch/data/tokenize"
     "io"
     "log"
     "os"
@@ -37,16 +39,16 @@ func Init() {
 
 func main() {
     Init()
-    data.JiebaInit()
-    csvfile, err := os.Open("data/dataset/wukong_100m_1.csv")
+    tokenize.JiebaInit()
+    csvfile, err := os.Open("data/dataset/wukong_100m_0.csv")
     if err != nil {
         panic(err)
     }
     defer csvfile.Close()
 
     csvReader := csv.NewReader(csvfile)
-    docDB := data.DocDataInit("data/db/doc")
-    indexDB := data.IndexDataInit("data/db/index")
+    docDB := doc.DocDataInit("data/db/doc")
+    indexDB := index.IndexDataInit("data/db/index")
     defer docDB.DocDB.Close()
     defer indexDB.IndexDB.Close()
     _, err = csvReader.Read()
@@ -78,7 +80,7 @@ func main() {
         if err != nil {
             panic(err)
         }
-        words := data.PartWord(doc.Text)
+        words := tokenize.PartWord(doc.Text)
 
         for i := range words {
             if ids, ok := wordMap[words[i]]; ok {
