@@ -3,16 +3,15 @@ package search
 import (
     "hegosearch/data/doc"
     "hegosearch/data/index"
+    "hegosearch/data/tokenize"
     "log"
     "math"
 )
 
 type Search struct {
-    indexDB  *index.IndexDB
-    docDB    *doc.DocDB
-    DocItems []*DocItem
-    DocMap   map[uint64]uint64
-    ScoreMap map[uint64]float64
+    indexDB  *index.IndexDriver
+    docDB    *doc.DocDriver
+    Tokenize tokenize.Token
 }
 
 type DocItem struct {
@@ -20,12 +19,11 @@ type DocItem struct {
     Count uint64
 }
 
-func SearchInit(indexDB *index.IndexDB, docDB *doc.DocDB) *Search {
+func NewSearch(indexDB *index.IndexDriver, docDB *doc.DocDriver, token tokenize.Token) *Search {
     search := Search{
         indexDB:  indexDB,
         docDB:    docDB,
-        DocMap:   make(map[uint64]uint64),
-        ScoreMap: make(map[uint64]float64),
+        Tokenize: token,
     }
     return &search
 }
@@ -35,19 +33,20 @@ func (search *Search) SearchKey(key string) (map[uint64]float64, error) {
     if err != nil {
         return nil, err
     }
-    search.processIds(ids)
+    docMap := search.processIds(ids)
     // tf(t in d) = √frequency 词频
     // idf(t) = 1 + log ( numDocs / (docFreq + 1)) 逆向文档频率
     // norm(d) = 1 / √numTerms 字段长度归一值
     // 开始计算分数
-    search.processScores()
-    return search.ScoreMap, nil
+    score := search.processScores(docMap)
+    return score, nil
 }
 
-func (search *Search) processScores() {
-    count := search.docDB.CountDocDB()
-    idf := math.Log10(float64(count) / float64(len(search.DocMap)))
-    for index, item := range search.DocMap {
+func (search *Search) processScores(docMap map[uint64]uint64) map[uint64]float64 {
+    count := search.docDB.CountDoc()
+    idf := math.Log10(float64(count)/float64(len(docMap))) + 1
+    scoreMap := make(map[uint64]float64)
+    for index, item := range docMap {
         tf := math.Sqrt(float64(item))
         doc, err := search.docDB.FindFromDocDB(index)
         if err != nil {
@@ -56,21 +55,16 @@ func (search *Search) processScores() {
         }
         textLen := len(doc.Text)
         norm := math.Pow(math.Sqrt(float64(textLen)), -1)
-        keyScore := norm * tf * idf
-        search.ScoreMap[index] = keyScore
+        keyScore := norm * tf * math.Pow(idf, 2)
+        scoreMap[index] = keyScore
     }
+    return scoreMap
 }
 
-func (search *Search) processIds(ids []uint64) {
+func (search *Search) processIds(ids []uint64) map[uint64]uint64 {
+    docMap := make(map[uint64]uint64)
     for i := range ids {
-        search.DocMap[ids[i]]++
+        docMap[ids[i]]++
     }
-    items := make([]*DocItem, len(search.DocMap))
-    for key, value := range search.DocMap {
-        items = append(items, &DocItem{
-            Id:    key,
-            Count: value,
-        })
-    }
-    search.DocItems = items
+    return docMap
 }

@@ -30,8 +30,9 @@ func (s *LevelDBStorage) Set(key []byte, value []byte) error {
 func (s *LevelDBStorage) Count() uint64 {
     iter := s.DB.NewIterator(nil, nil)
     iterPointer := reflect.ValueOf(iter)
-    iterValue := reflect.ValueOf(iterPointer.Elem())
-    return iterValue.FieldByName("seq").Uint()
+    iterValue := iterPointer.Elem()
+    num := iterValue.FieldByName("seq").Uint()
+    return num
 }
 
 func (s *LevelDBStorage) Close() {

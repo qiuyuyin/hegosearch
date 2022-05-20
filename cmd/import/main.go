@@ -7,6 +7,7 @@ import (
     "hegosearch/data/doc"
     "hegosearch/data/index"
     "hegosearch/data/model"
+    "hegosearch/data/storage"
     "hegosearch/data/tokenize"
     "io"
     "log"
@@ -47,17 +48,23 @@ func main() {
     defer csvfile.Close()
 
     csvReader := csv.NewReader(csvfile)
-    docDB := doc.DocDataInit("data/db/doc")
-    indexDB := index.IndexDataInit("data/db/index")
-    defer docDB.DocDB.Close()
-    defer indexDB.IndexDB.Close()
+    docDB := doc.NewDocDriver(
+        storage.NewLevelDBStorage("data/db/doc"),
+    )
+    indexDB := index.NewIndexDriver(
+        storage.NewLevelDBStorage("data/db/index"),
+    )
+    defer docDB.Storage.Close()
+    defer indexDB.IndexStorage.Close()
     _, err = csvReader.Read()
     if err == io.EOF {
         log.Fatalf("read first error")
     }
+
+    // start the time and count
     start := time.Now()
     count := 0
-
+    // new map to contain the index result
     wordMap := make(map[string][]uint64)
     for {
         count++
@@ -89,9 +96,10 @@ func main() {
                 wordMap[words[i]] = []uint64{id}
             }
         }
+        // if count print the result
         if count%10000 == 0 {
             cost := time.Since(start)
-            fmt.Println("import cost:", cost.Seconds(), "s")
+            fmt.Println("import cost:", cost.Seconds(), "s", " || and the count: ", count)
             start = time.Now()
         }
     }
