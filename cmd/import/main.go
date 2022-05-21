@@ -40,7 +40,7 @@ func Init() {
 
 func main() {
     Init()
-    tokenize.JiebaInit()
+    token := tokenize.NewToken()
     csvfile, err := os.Open("data/dataset/wukong_100m_0.csv")
     if err != nil {
         panic(err)
@@ -60,7 +60,6 @@ func main() {
     if err == io.EOF {
         log.Fatalf("read first error")
     }
-
     // start the time and count
     start := time.Now()
     count := 0
@@ -87,7 +86,7 @@ func main() {
         if err != nil {
             panic(err)
         }
-        words := tokenize.PartWord(doc.Text)
+        words := token.PartWord(doc.Text)
 
         for i := range words {
             if ids, ok := wordMap[words[i]]; ok {
