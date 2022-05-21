@@ -1,7 +1,6 @@
 package main
 
 import (
-    "bufio"
     "encoding/csv"
     "fmt"
     "hegosearch/data/doc"
@@ -17,31 +16,9 @@ import (
 
 // import the csv data from dataset
 
-var (
-    filenames []string
-)
-
-func Init() {
-    filenameInfo, err := os.Open("data/file")
-    if err != nil {
-        panic(err)
-    }
-    reader := bufio.NewReader(filenameInfo)
-    for {
-        line, _, err := reader.ReadLine()
-        if err != nil {
-            if err == io.EOF {
-                break
-            }
-        }
-        filenames = append(filenames, string(line))
-    }
-}
-
 func main() {
-    Init()
     token := tokenize.NewToken()
-    csvfile, err := os.Open("data/dataset/wukong_100m_0.csv")
+    csvfile, err := os.Open("data/dataset/wukong_100m_1.csv")
     if err != nil {
         panic(err)
     }
