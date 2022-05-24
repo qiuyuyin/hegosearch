@@ -10,7 +10,7 @@ type SearchReq struct {
 }
 
 type SearchResp struct {
-    result []*ResultDoc
+    Result []*ResultDoc
 }
 
 type ResultDoc struct {
@@ -45,7 +45,7 @@ func (ss *SearchSever) Search(c *gin.Context) {
                 Text:  content.Text,
             }
         }
-        OkWithDetailed(SearchResp{result: res}, "success", c)
+        OkWithDetailed(SearchResp{Result: res}, "success", c)
     } else {
         FailWithMessage("参数错误", c)
     }

@@ -22,6 +22,17 @@ func main() {
         fmt.Println("path error")
         return
     }
+    _, err = os.Stat(*path + "/db/index")
+    if os.IsNotExist(err) {
+        fmt.Println("path error")
+        return
+    }
+    _, err = os.Stat(*path + "/db/doc")
+
+    if os.IsNotExist(err) {
+        fmt.Println("path error")
+        return
+    }
     docDB := doc.NewDocDriver(
         storage.NewLevelDBStorage(*path + "/db/doc"),
     )
@@ -32,7 +43,7 @@ func main() {
     newSearch := search.NewSearch(indexDB, docDB, token)
     router := server.Router(server.NewSearchSever(newSearch))
     s := &http.Server{
-        Addr:           "0.0.0.0:8080",
+        Addr:           "127.0.0.1:8080",
         Handler:        router,
         ReadTimeout:    10 * time.Second,
         WriteTimeout:   10 * time.Second,

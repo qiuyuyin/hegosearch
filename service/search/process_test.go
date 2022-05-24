@@ -23,7 +23,7 @@ func TestSearchText(t *testing.T) {
     defer docDB.CloseDocDB()
     newSearch := NewSearch(indexDB, docDB, token)
     start := time.Now()
-    results := SearchText("开个玩笑", newSearch)
+    results := SearchText("开个", newSearch)
     duration := time.Since(start)
     fmt.Println("time: ", duration.Milliseconds(), "ms")
     for _, result := range results {

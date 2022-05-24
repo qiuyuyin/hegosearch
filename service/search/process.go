@@ -24,7 +24,7 @@ func SearchText(text string, engine *Search) []*ProcessResult {
         scoreMap, err := engine.SearchKey(words[i])
         if err != nil {
             log.Println("when search word ", words[i], "error")
-            break
+            continue
         }
         for key := range scoreMap {
             if _, ok := allScoreMap[key]; ok {
