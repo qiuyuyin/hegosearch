@@ -2,6 +2,7 @@ package main
 
 import (
     "encoding/csv"
+    "flag"
     "fmt"
     "hegosearch/data/doc"
     "hegosearch/data/index"
@@ -17,8 +18,10 @@ import (
 // import the csv data from dataset
 
 func main() {
+    path := flag.String("p", "data", "this is the path of data")
+    filePath := flag.String("f", "data/dataset/wukong_100m_1.csv", "this is the path of data")
     token := tokenize.NewToken()
-    csvfile, err := os.Open("data/dataset/wukong_100m_1.csv")
+    csvfile, err := os.Open(*filePath)
     if err != nil {
         panic(err)
     }
@@ -26,10 +29,10 @@ func main() {
 
     csvReader := csv.NewReader(csvfile)
     docDB := doc.NewDocDriver(
-        storage.NewLevelDBStorage("data/db/doc"),
+        storage.NewLevelDBStorage(*path + "/db/doc"),
     )
     indexDB := index.NewIndexDriver(
-        storage.NewLevelDBStorage("data/db/index"),
+        storage.NewLevelDBStorage(*path + "/db/index"),
     )
     defer docDB.Storage.Close()
     defer indexDB.IndexStorage.Close()

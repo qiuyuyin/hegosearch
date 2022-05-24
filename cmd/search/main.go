@@ -1,6 +1,8 @@
 package main
 
 import (
+    "flag"
+    "fmt"
     "hegosearch/data/doc"
     "hegosearch/data/index"
     "hegosearch/data/storage"
@@ -8,15 +10,23 @@ import (
     "hegosearch/server"
     "hegosearch/service/search"
     "net/http"
+    "os"
     "time"
 )
 
 func main() {
+    path := flag.String("p", "data", "this is the path of data")
+    flag.Parse()
+    _, err := os.Stat(*path)
+    if os.IsNotExist(err) {
+        fmt.Println("path error")
+        return
+    }
     docDB := doc.NewDocDriver(
-        storage.NewLevelDBStorage("data/db/doc"),
+        storage.NewLevelDBStorage(*path + "/db/doc"),
     )
     indexDB := index.NewIndexDriver(
-        storage.NewLevelDBStorage("data/db/index"),
+        storage.NewLevelDBStorage(*path + "/db/index"),
     )
     token := tokenize.NewToken()
     newSearch := search.NewSearch(indexDB, docDB, token)
