@@ -4,6 +4,7 @@ import (
     "fmt"
     "hegosearch/data/doc"
     "hegosearch/data/index"
+    "hegosearch/data/model"
     "hegosearch/data/storage"
     "hegosearch/data/tokenize"
     "testing"
@@ -23,7 +24,13 @@ func TestSearchText(t *testing.T) {
     defer docDB.CloseDocDB()
     newSearch := NewSearch(indexDB, docDB, token)
     start := time.Now()
-    results := SearchText("开个", newSearch)
+
+    req := model.SearchReq{
+        Text:     "笑不出来",
+        StopWord: "",
+        Limit:    20,
+    }
+    results := SearchText(&req, newSearch)
     duration := time.Since(start)
     fmt.Println("time: ", duration.Milliseconds(), "ms")
     for _, result := range results {
@@ -45,7 +52,13 @@ func TestSearchResult(t *testing.T) {
     defer docDB.CloseDocDB()
     newSearch := NewSearch(indexDB, docDB, token)
     start := time.Now()
-    results := SearchResult("开个玩笑", newSearch)
+
+    req := model.SearchReq{
+        Text:     "笑不出来",
+        StopWord: "",
+        Limit:    100,
+    }
+    results := SearchResult(&req, newSearch)
     duration := time.Since(start)
     fmt.Println("time: ", duration.Milliseconds(), "ms")
     for _, result := range results {

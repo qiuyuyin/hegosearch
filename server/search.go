@@ -1,13 +1,10 @@
 package server
 
-import "hegosearch/service/search"
+import (
+    "hegosearch/data/model"
+    "hegosearch/service/search"
+)
 import "github.com/gin-gonic/gin"
-
-type SearchReq struct {
-    Text     string `json:"text"`
-    StopWord string `json:"stopWord"`
-    Limit    int64  `json:"limit"`
-}
 
 type SearchResp struct {
     Result []*ResultDoc
@@ -29,13 +26,13 @@ func NewSearchSever(engine *search.Search) *SearchSever {
 }
 
 func (ss *SearchSever) Search(c *gin.Context) {
-    var searchReq SearchReq
+    var searchReq model.SearchReq
     if err := c.ShouldBindJSON(&searchReq); err == nil {
         if err != nil {
             FailWithMessage("解析输入错误", c)
             return
         }
-        result := search.SearchResult(searchReq.Text, ss.Engine)
+        result := search.SearchResult(&searchReq, ss.Engine)
         res := make([]*ResultDoc, len(result))
         for i, content := range result {
             res[i] = &ResultDoc{

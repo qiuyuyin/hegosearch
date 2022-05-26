@@ -1,6 +1,7 @@
 package search
 
 import (
+    "hegosearch/data/model"
     "log"
     "sort"
 )
@@ -17,8 +18,14 @@ type SearchContent struct {
     Text  string
 }
 
-func SearchText(text string, engine *Search) []*ProcessResult {
-    words := engine.Tokenize.PartWord(text)
+type ProcessParams struct {
+    Limit    uint64
+    Text     string
+    StopWord string
+}
+
+func SearchText(req *model.SearchReq, engine *Search) []*ProcessResult {
+    words := engine.Tokenize.PartWord(req.Text)
     allScoreMap := make(map[uint64]*DocResult)
     for i := range words {
         scoreMap, err := engine.SearchKey(words[i])
@@ -55,9 +62,10 @@ func SearchText(text string, engine *Search) []*ProcessResult {
     return processResults
 }
 
-func SearchResult(text string, engine *Search) []*SearchContent {
-    proRes := SearchText(text, engine)
-    res := make([]*SearchContent, len(proRes))
+func SearchResult(req *model.SearchReq, engine *Search) []*SearchContent {
+    proRes := SearchText(req, engine)
+    res := make([]*SearchContent, req.Limit)
+    count := uint64(0)
     for i, result := range proRes {
         docRes, err := engine.docDB.FindFromDocDB(result.DocId)
         if err != nil {
@@ -69,6 +77,10 @@ func SearchResult(text string, engine *Search) []*SearchContent {
             Score: result.Score,
             Url:   docRes.Url,
             Text:  docRes.Text,
+        }
+        count++
+        if count >= req.Limit {
+            break
         }
     }
     return res
