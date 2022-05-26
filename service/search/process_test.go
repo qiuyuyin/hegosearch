@@ -54,17 +54,19 @@ func TestSearchResult(t *testing.T) {
     start := time.Now()
 
     req := model.SearchReq{
-        Text:     "笑不出来",
+        Text:     "说谎",
         StopWord: "",
         Limit:    100,
     }
     results := SearchResult(&req, newSearch)
     duration := time.Since(start)
     fmt.Println("time: ", duration.Milliseconds(), "ms")
-    for _, result := range results {
+    for _, result := range results.Content {
         fmt.Println("DocId: ", result.DocId)
         fmt.Println("Score: ", result.Score)
         fmt.Println("Url: ", result.Url)
         fmt.Println("Text: ", result.Text)
     }
+    fmt.Println(results.Time)
+    fmt.Println(results.Count)
 }

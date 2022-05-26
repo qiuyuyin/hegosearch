@@ -4,6 +4,7 @@ import (
     "hegosearch/data/model"
     "log"
     "sort"
+    "time"
 )
 
 type DocResult struct {
@@ -22,6 +23,12 @@ type ProcessParams struct {
     Limit    uint64
     Text     string
     StopWord string
+}
+
+type SearchResp struct {
+    Content []*SearchContent
+    Time    int64
+    Count   uint64
 }
 
 func SearchText(req *model.SearchReq, engine *Search) []*ProcessResult {
@@ -62,9 +69,14 @@ func SearchText(req *model.SearchReq, engine *Search) []*ProcessResult {
     return processResults
 }
 
-func SearchResult(req *model.SearchReq, engine *Search) []*SearchContent {
+func SearchResult(req *model.SearchReq, engine *Search) *SearchResp {
+    start := time.Now()
     proRes := SearchText(req, engine)
-    res := make([]*SearchContent, req.Limit)
+    length := len(proRes)
+    if uint64(length) > req.Limit {
+        length = int(req.Limit)
+    }
+    res := make([]*SearchContent, length)
     count := uint64(0)
     for i, result := range proRes {
         docRes, err := engine.docDB.FindFromDocDB(result.DocId)
@@ -83,5 +95,10 @@ func SearchResult(req *model.SearchReq, engine *Search) []*SearchContent {
             break
         }
     }
-    return res
+    since := time.Since(start).Milliseconds()
+    return &SearchResp{
+        Content: res,
+        Time:    since,
+        Count:   uint64(len(proRes)),
+    }
 }

@@ -7,7 +7,10 @@ import (
 import "github.com/gin-gonic/gin"
 
 type SearchResp struct {
-    Result []*ResultDoc
+    Result []*ResultDoc `json:"Result"`
+    // ms
+    Time  int64  `json:"time"`
+    Count uint64 `json:"count"`
 }
 
 type ResultDoc struct {
@@ -33,8 +36,8 @@ func (ss *SearchSever) Search(c *gin.Context) {
             return
         }
         result := search.SearchResult(&searchReq, ss.Engine)
-        res := make([]*ResultDoc, len(result))
-        for i, content := range result {
+        res := make([]*ResultDoc, len(result.Content))
+        for i, content := range result.Content {
             res[i] = &ResultDoc{
                 DocId: content.DocId,
                 Score: content.Score,
@@ -42,7 +45,7 @@ func (ss *SearchSever) Search(c *gin.Context) {
                 Text:  content.Text,
             }
         }
-        OkWithDetailed(SearchResp{Result: res}, "success", c)
+        OkWithDetailed(SearchResp{Result: res, Time: result.Time, Count: result.Count}, "success", c)
     } else {
         FailWithMessage("参数错误", c)
     }
